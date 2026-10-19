@@ -227,10 +227,10 @@ final class Coordinator
      */
     public void predict() throws ClassNotFoundException, RemoteReadException, IOException, NullClassConversionException
     {
-        System.out.println("Tell me the image file to classify: ");
-        String imagePath = Tools.INPUT.nextLine();
+        System.out.println("Tell me the image file to classify (e.g. cat/00003_cat.png): ");
+        String relative = Tools.INPUT.nextLine();
 
-        File imageFile = new File(imagePath);
+        File imageFile = new File(CNNConfig.PREDICT_DATA_PATH + relative);
         if (!imageFile.isFile())
         {
             System.out.println("Not a file: " + imageFile.getAbsolutePath());

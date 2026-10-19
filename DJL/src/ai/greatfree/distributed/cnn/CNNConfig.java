@@ -11,9 +11,10 @@ public final class CNNConfig
     // 1. PATHS  (same root, different subfolders)
     // ============================================================
     public final static String HOME_PATH          = "/home/liyanxin/AI/Data/";
-    public final static String SOURCE_DATA_PATH   = HOME_PATH + "SourceData/";
+    public final static String SOURCE_DATA_PATH   = HOME_PATH + "SourceData/cifar10/";
     public final static String TRAINING_DATA_PATH = HOME_PATH + "TrainingData/";
     public final static String TRAINED_DATA_PATH  = HOME_PATH + "TrainedData/";
+    public final static String PREDICT_DATA_PATH = SOURCE_DATA_PATH + "test/";
 
     // ============================================================
     // 2. IDENTITY / SENTINELS  (identical to RNNConfig)
