@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div id='target' ></div>
+        <script>
+        var target_target = document.getElementById('target');
+        var layout = {
+    height: 600,
+    width: 800,
+    showlegend: true,
+    xaxis: {
+    title: 'epochCount',
+    },
+
+    yaxis: {
+    title: 'loss',
+    },
+
+};
+
+var trace0 =
+{
+x: ["1.0","2.0","3.0","4.0","5.0","6.0","7.0","8.0","9.0","10.0"],
+y: ["0.7810043096542358","0.4898238480091095","0.42688116431236267","0.3954557180404663","0.3708938658237457","0.353724867105484","0.33730819821357727","0.32567140460014343","0.31500279903411865","0.30609166622161865"],
+showlegend: true,
+mode: 'lines',
+xaxis: 'x',
+yaxis: 'y',
+type: 'scatter',
+name: 'train loss',
+};
+var trace1 =
+{
+x: ["1.0","2.0","3.0","4.0","5.0","6.0","7.0","8.0","9.0","10.0"],
+y: ["0.7093666791915894","0.8198333382606506","0.8428999781608582","0.854533314704895","0.8628333210945129","0.8696500062942505","0.8751000165939331","0.8794666528701782","0.8824333548545837","0.887066662311554"],
+showlegend: true,
+mode: 'lines',
+xaxis: 'x',
+yaxis: 'y',
+type: 'scatter',
+name: 'train acc',
+};
+var trace2 =
+{
+x: ["1.0","2.0","3.0","4.0","5.0","6.0","7.0","8.0","9.0","10.0"],
+y: ["0.7685999870300293","0.8299999833106995","0.8276000022888184","0.8343999981880188","0.8367000222206116","0.8212000131607056","0.8529999852180481","0.8323000073432922","0.843999981880188","0.8460999727249146"],
+showlegend: true,
+mode: 'lines',
+xaxis: 'x',
+yaxis: 'y',
+type: 'scatter',
+name: 'test acc',
+};
+
+        var data = [ trace0, trace1, trace2];
+Plotly.newPlot(target_target, data, layout);            </script>
+
+</body>
+</html>

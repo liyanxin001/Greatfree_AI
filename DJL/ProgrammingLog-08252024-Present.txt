@@ -1,0 +1,24 @@
+08/28/2024, Bing Li
+
+Chapter 7 and Chapter 8 are read.
+
+Chapter 8 is an important one to learn how to train text data, which is sequential.
+
+I need to follow the example in the chapter to implement a distributed one with GreatFree.
+
+The current lines of code are 7719.
+
+The total number of files is 128.
+
+=======================================================
+
+08/25/2024, Bing Li
+
+The project is the learning practices of DJL (Deep Java Library).
+
+Now the code covers Chapter 2, 3, 4, 5, 6, 12, and 14.
+
+The current lines of code are 6038.
+
+The total number of files is 114.
+

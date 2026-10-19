@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div id='target' ></div>
+        <script>
+        var target_target = document.getElementById('target');
+        var layout = {
+    height: 600,
+    width: 800,
+    showlegend: true,
+    xaxis: {
+    title: 'epoch',
+    },
+
+    yaxis: {
+    title: 'value',
+    },
+
+};
+
+var trace0 =
+{
+x: ["1.0","2.0","3.0","4.0"],
+y: ["0.7855579","0.5707064","0.52402544","0.5009848"],
+showlegend: true,
+mode: 'lines',
+xaxis: 'x',
+yaxis: 'y',
+type: 'scatter',
+name: 'train loss',
+};
+var trace1 =
+{
+x: ["1.0","2.0","3.0","4.0"],
+y: ["0.74833333","0.8118333","0.8265333","0.83218336"],
+showlegend: true,
+mode: 'lines',
+xaxis: 'x',
+yaxis: 'y',
+type: 'scatter',
+name: 'train accuracy',
+};
+var trace2 =
+{
+x: ["1.0","2.0","3.0","4.0"],
+y: ["0.80859375","0.80859375","0.8359375","0.8359375"],
+showlegend: true,
+mode: 'lines',
+xaxis: 'x',
+yaxis: 'y',
+type: 'scatter',
+name: 'test accuracy',
+};
+
+        var data = [ trace0, trace1, trace2];
+Plotly.newPlot(target_target, data, layout);            </script>
+
+</body>
+</html>

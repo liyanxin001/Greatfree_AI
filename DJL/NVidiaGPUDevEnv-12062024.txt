@@ -1,0 +1,158 @@
+12/06/2024, Bing Li
+
+Ubuntu version: 24.04
+
+Ubuntu version: 20.04 (failed)
+
+Install driver
+-------------------------------------------------------
+
+1) Check NVidia driver status.
+
+	nvidia-smi
+
+2) Check graphics cards.
+
+	lspci | grep -E "VGA|3D"
+
+3) Download the driver from nvidia.com for the card checked above.
+
+	download.nvidia.com (NVIDIA-Linux-x86_64-565.57.01.run)
+
+4) Check the status of Secure Boot.
+
+	mokutil --sb-state
+	
+5) If the status of Secure Boot is enabled, it is necessary to disable it.
+
+	To do that, enter the BIOS menu (recommended)
+
+6) Make NVidia installer executable.
+
+	chmod +x NVIDIA-Linux-x86_64-565.57.01.run
+	
+7) Change to root.
+
+	sudo -i
+
+9) Update the system.
+
+	apt update
+
+10) Upgrade the system.
+	
+	apt upgrade
+
+11) Remove installed NVIDIA drivers.
+
+	apt autoremove $(dpkg -l *nvidia* | grep ii | awk '{print $2}')
+	
+12) Reinstall xserver-xorg-video-nouveau.
+
+	apt reinstall xserver-xorg-video-nouveau
+
+13) Boot using latest kernel and nouveau.
+
+	reboot
+
+14) Change to root.
+
+	sudo -i
+
+15) Install needed dependencies.
+
+	apt install linux-headers-$(uname -r) gcc make acpid dkms libglvnd-core-dev libglvnd0 libglvnd-dev dracut libc-dev
+	
+16) Disable nouveau.
+
+	echo "blacklist nouveau" >> /etc/modprobe.d/blacklist.conf
+
+17) Display blacklist.conf.
+
+	cat /etc/modprobe.d/blacklist.conf
+
+18) Edit /etc/default/grub.
+
+	vi /etc/default/grub
+
+19) Update grub2 conf.
+
+	update-grub2
+	
+20) Backup old initramfs image.
+
+	mv /boot/initrd.img-$(uname -r) /boot/initrd.img-$(uname -r)-nouveau
+	
+21) Generate new initramfs image.
+
+	dracut -q /boot/initrd.img-$(uname -r) $(uname -r)
+	
+22) Reboot to runlevel 3.
+
+	systemctl set-default multi-user.target
+	
+	reboot
+
+23) Run NVidia installer.
+
+	NVIDIA-Linux-x86_64-565.57.01.run
+
+24) Check dkms status.
+
+	dkms status
+
+25) Boot back to runlevel 5.
+
+	systemctl set-default graphical.target
+	
+	reboot
+
+26) Check NVidia installation.
+
+	nvidia-installer -v
+
+27) Check LSB.
+
+	lsb_release -a
+
+28) Check Ubuntu.
+
+	uname -a
+
+29) Check NVidia installation.
+
+	nvidia-smi
+	
+Install CUDA toolkit 11.2
+-------------------------------------------------------
+
+1) Check OS.
+
+	cat /etc/os-release
+
+2) Update the system.
+
+	sudo apt update
+	
+3) Upgrade the system.
+
+	sudo apt upgrade -y
+
+4) Install gcc.
+
+	sudo apt install gcc
+
+5) wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
+
+6) sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
+
+7) wget https://developer.download.nvidia.com/compute/cuda/11.2.0/local_installers/cuda-repo-ubuntu2004-11-2-local_11.2.0-460.27.04-1_amd64.deb
+
+8) sudo dpkg -i cuda-repo-ubuntu2004-11-2-local_11.2.0-460.27.04-1_amd64.deb
+
+9) sudo apt-key add /var/cuda-repo-ubuntu2004-11-2-local/7fa2af80.pub
+
+10) sudo apt-get update
+
+11) sudo apt-get -y install cuda
+

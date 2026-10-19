@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div id='target' ></div>
+        <script>
+        var target_target = document.getElementById('target');
+        var layout = {
+    height: 600,
+    width: 800,
+    showlegend: true,
+    xaxis: {
+    title: 'epochCount',
+    },
+
+    yaxis: {
+    title: 'loss',
+    },
+
+};
+
+var trace0 =
+{
+x: ["0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0"],
+y: ["0.7453","0.7874","0.8225","0.8308","0.8438","0.7719","0.8523","0.8414","0.8542","0.8281"],
+showlegend: true,
+mode: 'lines',
+xaxis: 'x',
+yaxis: 'y',
+type: 'scatter',
+name: 'test acc',
+};
+var trace1 =
+{
+x: ["0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0"],
+y: ["0.54471666","0.78033334","0.82271665","0.83643335","0.8483833","0.85151666","0.85801667","0.86541665","0.8684667","0.87098336"],
+showlegend: true,
+mode: 'lines',
+xaxis: 'x',
+yaxis: 'y',
+type: 'scatter',
+name: 'train acc',
+};
+var trace2 =
+{
+x: ["0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0","0.0"],
+y: ["1.171705","0.59195673","0.48863256","0.44812047","0.41542268","0.4053663","0.38901922","0.36663455","0.35871997","0.35041144"],
+showlegend: true,
+mode: 'lines',
+xaxis: 'x',
+yaxis: 'y',
+type: 'scatter',
+name: 'train loss',
+};
+
+        var data = [ trace0, trace1, trace2];
+Plotly.newPlot(target_target, data, layout);            </script>
+
+</body>
+</html>
