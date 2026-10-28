@@ -1,4 +1,4 @@
-package ai.greatfree.distributed.cnn.child.registry;
+package ai.greatfree.distributed.cnn.registry;
 
 import java.net.SocketException;
 /*     */ import java.util.HashMap;
