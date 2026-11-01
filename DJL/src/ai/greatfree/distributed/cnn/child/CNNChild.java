@@ -17,13 +17,13 @@ import ai.greatfree.distributed.cnn.CNNConfig;
 import ai.greatfree.distributed.cnn.child.app.CNNTrainer;
 import ai.greatfree.distributed.cnn.child.app.ChildProfile;
 
-import ai.greatfree.distributed.rnn.message.ChildPath;
-import ai.greatfree.distributed.rnn.message.ChildPathsRequest;
-import ai.greatfree.distributed.rnn.message.ChildPathsResponse;
+import ai.greatfree.distributed.cnn.message.ChildPath;
+import ai.greatfree.distributed.cnn.message.ChildPathsRequest;
+import ai.greatfree.distributed.cnn.message.ChildPathsResponse;
 import ai.greatfree.distributed.cnn.message.GradientsAggregationRequest;
 import ai.greatfree.distributed.cnn.message.GradientsAggregationResponse;
 import ai.greatfree.distributed.cnn.message.CNNParam;
-import ai.greatfree.distributed.rnn.message.TrainingDoneNotification;
+import ai.greatfree.distributed.cnn.message.TrainingDoneNotification;
 import edu.greatfree.cluster.ClusterSpec;
 import edu.greatfree.cluster.child.Child;
 import edu.greatfree.cluster.child.ChildTask;

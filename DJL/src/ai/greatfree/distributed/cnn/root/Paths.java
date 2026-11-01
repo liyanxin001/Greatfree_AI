@@ -4,8 +4,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.greatfree.util.UtilConfig;
 
-import ai.greatfree.distributed.rnn.RNNConfig;
-import ai.greatfree.distributed.rnn.message.ChildPath;
+import ai.greatfree.distributed.cnn.CNNConfig;
+import ai.greatfree.distributed.cnn.message.ChildPath;
 
 /**
  * Created: 08/29/2024, Bing Li
@@ -40,7 +40,7 @@ final class Paths
 
 	public synchronized ChildPath getPath(String trainingDataPath, String trainedDataPath)
 	{
-		String childID = RNNConfig.CHILD + this.currentCount.getAndIncrement();
+		String childID = CNNConfig.CHILD + this.currentCount.getAndIncrement();
 		trainingDataPath = trainingDataPath + childID + UtilConfig.FORWARD_SLASH;
 		trainedDataPath = trainedDataPath + childID + UtilConfig.FORWARD_SLASH;
 		return new ChildPath(trainingDataPath, trainedDataPath);

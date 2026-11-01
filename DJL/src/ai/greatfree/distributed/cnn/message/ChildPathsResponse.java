@@ -1,6 +1,6 @@
 package ai.greatfree.distributed.cnn.message;
 
-import ai.greatfree.distributed.rnn.message.ChildPath;
+
 import edu.greatfree.cluster.message.RootResponse;
 
 /**
