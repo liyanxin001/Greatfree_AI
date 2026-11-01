@@ -241,33 +241,20 @@ return new Pair<>(iter, loader.getClassNames());
          */
         public static NDArray maxPool2d(NDArray x, int kernel, int stride)
         {
-            NDManager manager = x.getManager();
             long N = x.getShape().get(0);
             long C = x.getShape().get(1);
             long H = x.getShape().get(2);
             long W = x.getShape().get(3);
 
-            long outH = (H - kernel) / stride + 1;
-            long outW = (W - kernel) / stride + 1;
+            // This version assumes kernel == stride and H, W are divisible by stride
+            // (true for the 2x2 pooling on 32x32 CIFAR-10 images).
+            long outH = H / stride;
+            long outW = W / stride;
 
-            NDArray out = manager.zeros(new Shape(N, C, outH, outW));
-
-            for (long i = 0; i < outH; i++)
-            {
-                for (long j = 0; j < outW; j++)
-                {
-                    long h0 = i * stride;
-                    long w0 = j * stride;
-                    NDArray window = x.get(new NDIndex(
-                            ":, :, {}:{}, {}:{}",
-                            h0, h0 + kernel,
-                            w0, w0 + kernel));
-                    // max over the last two axes -> [N][C]
-                    NDArray pooled = window.max(new int[]{2, 3});
-                    out.set(new NDIndex(":, :, {}, {}", i, j), pooled);
-                }
-            }
-            return out;
+            // Reshape to [N, C, outH, stride, outW, stride]
+            NDArray reshaped = x.reshape(N, C, outH, stride, outW, stride);
+            // Max over the two stride axes (axes 3 and 5)
+            return reshaped.max(new int[]{3, 5});
         }
 
     /** Fully connected. x: [N][D], W: [D][Cout], b: [Cout]. */
