@@ -220,25 +220,24 @@ return new Pair<>(iter, loader.getClassNames());
     //   (b) implement im2col + matmul here with only public NDArray methods.
     // ============================================================
 
-    /** 2D convolution. x: [N][Cin][H][W], W: [Cout][Cin][k][k]. */
-        public static NDArray conv2d(NDArray x, NDArray W, int stride, int padding)
-        {
-            NDList result = Conv2d.conv2d(
-                    x,                              // input  [N][Cin][H][W]
-                    W,                              // weight [Cout][Cin][k][k]
-                    null,                           // bias — pass null; add it yourself
-                    new Shape(stride, stride),      // stride
-                    new Shape(padding, padding),    // padding
-                    new Shape(1, 1),                // dilation
-                    1);                             // groups
-            return result.singletonOrThrow();       // Conv2d.conv2d returns an NDList
-        }   
+    public static NDArray conv2d(NDArray x, NDArray W, int stride, int padding)
+    {
+        NDManager mgr = x.getManager();
+        // Use an explicit zeros bias instead of null —
+        // null can trigger a non-differentiable code path in MXNet.
+        NDArray zeroBias = mgr.zeros(new Shape(W.getShape().get(0)));
 
-        /**
-         * Max pooling from primitives. x: [N][C][H][W].
-         * Uses only public NDArray operations: slicing, max over axes, set.
-         * No DJL version dependencies.
-         */
+        NDList result = Conv2d.conv2d(
+                x,
+                W,
+                zeroBias,
+                new Shape(stride, stride),
+                new Shape(padding, padding),
+                new Shape(1, 1),
+                1);
+        return result.singletonOrThrow();
+    }
+    
         public static NDArray maxPool2d(NDArray x, int kernel, int stride)
         {
             long N = x.getShape().get(0);
@@ -387,16 +386,6 @@ return new Pair<>(iter, loader.getClassNames());
                 	    System.out.println("param[" + pi + "] shape=" + p.getShape()             	                    
                 	                       + " hasGradient=" + p.hasGradient());       // Use this instead
                 	}
-                	// ---- DIAGNOSTIC 2: Does autograd work on this thread? ----
-                	NDArray testW = manager.create(new float[]{1f}, new Shape(1));
-                	testW.setRequiresGradient(true);
-                	NDArray testX = manager.create(new float[]{2f}, new Shape(1));
-                	NDArray testY = testX.mul(testW);
-
-                	try (GradientCollector testGc = manager.getEngine().newGradientCollector()) {
-                	    testGc.backward(testY);
-                	}
-                	System.out.println("AUTOGRAD TEST grad=" + testW.getGradient() + " (expected 2.0)");
                 	
                     NDArray logits = net.forward(X);
                     NDArray l = loss.evaluate(new NDList(Y), new NDList(logits)).mean();
