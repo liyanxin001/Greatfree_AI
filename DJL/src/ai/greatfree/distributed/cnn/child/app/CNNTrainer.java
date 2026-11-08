@@ -30,14 +30,15 @@ public final class CNNTrainer
     private List<Pair<NDArray, NDArray>> trainIter;
     private List<String> classNames;
 
-    // ---- Function hooks — types now match CNNTools' actual signatures ----
-    // FIX 1, 2, 3: NDList -> NDArray; poolFn's second arg is not NDList.
+
     private TriFunction<Integer, Integer, Device, NDList> getParamsFn;
     private QuadFunction<NDArray, NDArray, Integer, Integer, NDArray> convFn;
     private QuadFunction<NDArray, Integer, Integer, Integer, NDArray> poolFn;
     private TriFunction<NDArray, NDArray, NDArray, NDArray>          fcFn;
 
     private Device device;
+    private final Object initLock = new Object();
+    private volatile boolean initialized = false;
     private int numEpochs;
     private CNNModelScratch net;
     private Function<NDArray, Pair<String, Float>> predictor;
@@ -125,6 +126,9 @@ public final class CNNTrainer
                 this.poolFn,
                 this.fcFn
         );
+        log.info("init() complete — " + trainIter.size() + " batches ready");
+        this.initialized = true; 
+        synchronized (initLock) { initLock.notifyAll(); }
     }
 
     public CNNModelScratch getCNN()
@@ -134,6 +138,12 @@ public final class CNNTrainer
 
     public void train() throws ClassNotFoundException, RemoteReadException, IOException, InterruptedException
     {
+    	synchronized (initLock) {
+    	    while (!initialized) {
+    	        log.info("train() waiting for init() to finish...");
+    	        initLock.wait(600_000);   
+    	    }
+    	}
         this.predictor = CNNTools.train(
                 this.net,
                 this.trainIter,
