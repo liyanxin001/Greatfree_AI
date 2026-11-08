@@ -381,6 +381,23 @@ return new Pair<>(iter, loader.getClassNames());
 
                 try (GradientCollector gc = manager.getEngine().newGradientCollector())
                 {
+                	// ---- DIAGNOSTIC 1: Do parameters have gradients enabled? ----
+                	for (int pi = 0; pi < net.params.size(); pi++) {
+                	    NDArray p = net.params.get(pi);
+                	    System.out.println("param[" + pi + "] shape=" + p.getShape()             	                    
+                	                       + " hasGradient=" + p.hasGradient());       // Use this instead
+                	}
+                	// ---- DIAGNOSTIC 2: Does autograd work on this thread? ----
+                	NDArray testW = manager.create(new float[]{1f}, new Shape(1));
+                	testW.setRequiresGradient(true);
+                	NDArray testX = manager.create(new float[]{2f}, new Shape(1));
+                	NDArray testY = testX.mul(testW);
+
+                	try (GradientCollector testGc = manager.getEngine().newGradientCollector()) {
+                	    testGc.backward(testY);
+                	}
+                	System.out.println("AUTOGRAD TEST grad=" + testW.getGradient() + " (expected 2.0)");
+                	
                     NDArray logits = net.forward(X);
                     NDArray l = loss.evaluate(new NDList(Y), new NDList(logits)).mean();
                     gc.backward(l);
