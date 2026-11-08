@@ -61,6 +61,10 @@ public final class CNNTrainer
     public void init() throws IOException, Exception
     {
         this.manager = NDManager.newBaseManager();
+        this.device = this.manager.getDevice();
+        if (this.device == null) {
+            this.device = ai.djl.Device.cpu();
+        }
 
         // ---- 1) Data: images laid out as  <root>/<class>/<file>.png ----
         this.loader = new ImageFolderLoader.ImageFolderLoaderBuilder()

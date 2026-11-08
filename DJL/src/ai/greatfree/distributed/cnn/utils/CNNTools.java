@@ -464,6 +464,11 @@ return new Pair<>(iter, loader.getClassNames());
 
         double avgLoss = 0.0, acc = 0.0;
         Pair<Double, Double> pair;
+        if (trainIter == null || trainIter.isEmpty())
+            throw new IllegalStateException("trainIter empty — init() failed or no data loaded");
+        if (numEpochs <= 0)
+            throw new IllegalStateException("numEpochs = " + numEpochs + " — check MAX_EPOCH / NUM_EPOCHS");
+        System.out.println("Starting training: " + numEpochs + " epochs, " + trainIter.size() + " batches, device=" + device);
         for (int epoch = 0; epoch < numEpochs; epoch++)
         {
             pair = trainByEpoch(net, trainIter, loss, updater, device, useRandomIter, manager);
