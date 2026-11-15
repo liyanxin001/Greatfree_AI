@@ -16,13 +16,14 @@ import org.greatfree.exceptions.RemoteReadException;
 
 import ai.djl.Device;
 import ai.djl.ndarray.NDArray;
+import ai.djl.ndarray.NDArrays;
 import ai.djl.ndarray.NDList;
 import ai.djl.ndarray.NDManager;
 import ai.djl.ndarray.index.NDIndex;
 
 import ai.djl.ndarray.types.DataType;
 import ai.djl.ndarray.types.Shape;
-import ai.djl.nn.convolutional.Conv2d;
+
 
 import ai.djl.training.GradientCollector;
 import ai.djl.training.loss.Loss;
@@ -222,20 +223,55 @@ return new Pair<>(iter, loader.getClassNames());
 
     public static NDArray conv2d(NDArray x, NDArray W, int stride, int padding)
     {
+        // x: [N][Cin][H][W], W: [Cout][Cin][k][k]
         NDManager mgr = x.getManager();
-        // Use an explicit zeros bias instead of null —
-        // null can trigger a non-differentiable code path in MXNet.
-        NDArray zeroBias = mgr.zeros(new Shape(W.getShape().get(0)));
+        long N = x.getShape().get(0);
+        long Cin = x.getShape().get(1);
+        long H = x.getShape().get(2);
+        long Wd = x.getShape().get(3);
+        long Cout = W.getShape().get(0);
+        long k = W.getShape().get(2);
 
-        NDList result = Conv2d.conv2d(
-                x,
-                W,
-                zeroBias,
-                new Shape(stride, stride),
-                new Shape(padding, padding),
-                new Shape(1, 1),
-                1);
-        return result.singletonOrThrow();
+        // Pad input if needed
+        NDArray xp = x;
+        if (padding > 0) {
+            // Manual zero-pad: allocate, then place x inside
+            xp = mgr.zeros(new Shape(N, Cin, H + 2*padding, Wd + 2*padding));
+            xp.set(new NDIndex(":, :, {}:{}, {}:{}",
+                    padding, padding + H, padding, padding + Wd), x);
+        }
+        long Hp = xp.getShape().get(2);
+        long Wp = xp.getShape().get(3);
+        long outH = (Hp - k) / stride + 1;
+        long outW = (Wp - k) / stride + 1;
+
+        // im2col: build a [N][outH*outW][Cin*k*k] matrix by gathering patches
+        // We do this as a loop, but each step is a differentiable slice
+        NDList patches = new NDList();
+        for (long i = 0; i < outH; i++) {
+            for (long j = 0; j < outW; j++) {
+                long h0 = i * stride, w0 = j * stride;
+                NDArray patch = xp.get(new NDIndex(
+                        ":, :, {}:{}, {}:{}",
+                        h0, h0 + k, w0, w0 + k));   // [N][Cin][k][k]
+                // Flatten each patch: [N][Cin*k*k]
+                patch = patch.reshape(N, Cin * k * k);
+                patches.add(patch);
+            }
+        }
+
+        // Stack into [outH*outW][N][Cin*k*k], then transpose to [N][outH*outW][Cin*k*k]
+        NDArray col = NDArrays.stack(patches);              // [outH*outW][N][Cin*k*k]
+        col = col.transpose(1, 0, 2);                       // [N][outH*outW][Cin*k*k]
+
+        // Reshape W: [Cout][Cin*k*k] and transpose for dot
+        NDArray Wflat = W.reshape(Cout, Cin * k * k);       // [Cout][Cin*k*k]
+
+        // Matmul: [N][outH*outW][Cin*k*k] × [Cin*k*k][Cout] → [N][outH*outW][Cout]
+        NDArray out = col.dot(Wflat.transpose());           // differentiable!
+        out = out.transpose(0, 2, 1);                       // [N][Cout][outH*outW]
+        out = out.reshape(N, Cout, outH, outW);             // [N][Cout][outH][outW]
+        return out;
     }
     
         public static NDArray maxPool2d(NDArray x, int kernel, int stride)
