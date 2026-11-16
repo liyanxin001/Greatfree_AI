@@ -223,6 +223,7 @@ return new Pair<>(iter, loader.getClassNames());
 
     public static NDArray conv2d(NDArray x, NDArray W, int stride, int padding)
     {
+    	System.out.println("CONV2D CALLED via " + new Throwable().getStackTrace()[0]);
         // x: [N][Cin][H][W], W: [Cout][Cin][k][k]
         NDManager mgr = x.getManager();
         long N = x.getShape().get(0);

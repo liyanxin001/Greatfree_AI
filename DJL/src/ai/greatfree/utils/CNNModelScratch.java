@@ -3,7 +3,7 @@ package ai.greatfree.utils;
 import ai.djl.Device;
 import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDList;
-import ai.djl.nn.Activation;
+
 
 /**
  * Created: 10/06/2026
@@ -82,7 +82,8 @@ public class CNNModelScratch
 
             x = convFn.apply(x, W, 1, 1);           // stride 1, pad 1 (same size)
             x = x.add(b.reshape(1, -1, 1, 1));      // broadcast bias over H,W
-            x = Activation.relu(x);                     // activation
+            NDArray zero = x.getManager().create(new float[]{0f});
+            x = x.maximum(zero);
             x = poolFn.apply(x, 2, 2, 0);           // 2x2 max pool -> halves H,W
         }
 
