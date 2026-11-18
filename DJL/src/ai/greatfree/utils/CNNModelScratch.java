@@ -80,10 +80,9 @@ public class CNNModelScratch
             NDArray W = params.get(p++);
             NDArray b = params.get(p++);
 
-            x = convFn.apply(x, W, 1, 1);           // stride 1, pad 1 (same size)
+            x = convFn.apply(x, W, 1, 0);           // stride 1, pad 1 (same size)
             x = x.add(b.reshape(1, -1, 1, 1));      // broadcast bias over H,W
-            NDArray zero = x.getManager().create(new float[]{0f});
-            x = x.maximum(zero);
+            x = x.add(x.abs()).mul(0.5f);
             x = poolFn.apply(x, 2, 2, 0);           // 2x2 max pool -> halves H,W
         }
 

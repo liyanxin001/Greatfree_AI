@@ -16,7 +16,7 @@ import org.greatfree.exceptions.RemoteReadException;
 
 import ai.djl.Device;
 import ai.djl.ndarray.NDArray;
-import ai.djl.ndarray.NDArrays;
+
 import ai.djl.ndarray.NDList;
 import ai.djl.ndarray.NDManager;
 import ai.djl.ndarray.index.NDIndex;
@@ -202,14 +202,19 @@ return new Pair<>(iter, loader.getClassNames());
             params.add(Wc);
             params.add(bc);
             c = numFilters[i];
-            h = h / 2;     // matches the 2x2 max-pool in CNNModelScratch.forward
-            w = w / 2;
+            // conv shrinks by (k-1), pool halves (ceil)
+            h = h - k + 1;
+            h = (h + 1) / 2;
+            w = w - k + 1;
+            w = (w + 1) / 2;
         }
-        NDArray Wf = normal(new Shape(c * h * w, numClasses), device, manager);
+        long featSize = (long) c * h * w;
+        NDArray Wf = normal(new Shape(featSize, numClasses), device, manager);
         NDArray bf = manager.zeros(new Shape(numClasses), DataType.FLOAT32, device);
         params.add(Wf);
         params.add(bf);
-		return params;
+        for (NDArray p : params) p.setRequiresGradient(true);
+        return params;
     }
     // ============================================================
     // 4) LAYER PRIMITIVES
@@ -223,76 +228,58 @@ return new Pair<>(iter, loader.getClassNames());
 
     public static NDArray conv2d(NDArray x, NDArray W, int stride, int padding)
     {
-    	System.out.println("CONV2D CALLED via " + new Throwable().getStackTrace()[0]);
-        // x: [N][Cin][H][W], W: [Cout][Cin][k][k]
-        NDManager mgr = x.getManager();
-        long N = x.getShape().get(0);
-        long Cin = x.getShape().get(1);
-        long H = x.getShape().get(2);
-        long Wd = x.getShape().get(3);
+        if (padding != 0) throw new IllegalArgumentException("conv2d supports padding=0 only");
+
+        long N    = x.getShape().get(0);
+        long Cin  = x.getShape().get(1);
+        long H    = x.getShape().get(2);
+        long Wd   = x.getShape().get(3);
         long Cout = W.getShape().get(0);
-        long k = W.getShape().get(2);
+        long kH   = W.getShape().get(2);
+        long kW   = W.getShape().get(3);
 
-        // Pad input if needed
-        NDArray xp = x;
-        if (padding > 0) {
-            // Manual zero-pad: allocate, then place x inside
-            xp = mgr.zeros(new Shape(N, Cin, H + 2*padding, Wd + 2*padding));
-            xp.set(new NDIndex(":, :, {}:{}, {}:{}",
-                    padding, padding + H, padding, padding + Wd), x);
-        }
-        long Hp = xp.getShape().get(2);
-        long Wp = xp.getShape().get(3);
-        long outH = (Hp - k) / stride + 1;
-        long outW = (Wp - k) / stride + 1;
+        long outH = (H - kH) / stride + 1;
+        long outW = (Wd - kW) / stride + 1;
 
-        // im2col: build a [N][outH*outW][Cin*k*k] matrix by gathering patches
-        // We do this as a loop, but each step is a differentiable slice
-        NDList patches = new NDList();
-        for (long i = 0; i < outH; i++) {
-            for (long j = 0; j < outW; j++) {
-                long h0 = i * stride, w0 = j * stride;
-                NDArray patch = xp.get(new NDIndex(
-                        ":, :, {}:{}, {}:{}",
-                        h0, h0 + k, w0, w0 + k));   // [N][Cin][k][k]
-                // Flatten each patch: [N][Cin*k*k]
-                patch = patch.reshape(N, Cin * k * k);
-                patches.add(patch);
+        NDArray out = null;
+        for (long kh = 0; kh < kH; kh++) {
+            for (long kw = 0; kw < kW; kw++) {
+                long hEnd = kh + (outH - 1) * stride + 1;
+                long wEnd = kw + (outW - 1) * stride + 1;
+                String hSlice = (stride > 1)
+                        ? kh + ":" + hEnd + ":" + stride
+                        : kh + ":" + hEnd;
+                String wSlice = (stride > 1)
+                        ? kw + ":" + wEnd + ":" + stride
+                        : kw + ":" + wEnd;
+
+                NDArray slice = x.get(new NDIndex(":,:," + hSlice + "," + wSlice));
+                slice = slice.transpose(0, 2, 3, 1);              // [N][outH][outW][Cin]
+                slice = slice.reshape(N * outH * outW, Cin);      // [N*outH*outW][Cin]
+
+                NDArray w = W.get(new NDIndex(":,:," + kh + "," + kw));  // [Cout][Cin]
+                NDArray partial = slice.dot(w.transpose());       // [N*outH*outW][Cout]
+                partial = partial.reshape(N, outH, outW, Cout);
+                partial = partial.transpose(0, 3, 1, 2);          // [N][Cout][outH][outW]
+
+                out = (out == null) ? partial : out.add(partial);
             }
         }
-
-        // Stack into [outH*outW][N][Cin*k*k], then transpose to [N][outH*outW][Cin*k*k]
-        NDArray col = NDArrays.stack(patches);              // [outH*outW][N][Cin*k*k]
-        col = col.transpose(1, 0, 2);                       // [N][outH*outW][Cin*k*k]
-
-        // Reshape W: [Cout][Cin*k*k] and transpose for dot
-        NDArray Wflat = W.reshape(Cout, Cin * k * k);       // [Cout][Cin*k*k]
-
-        // Matmul: [N][outH*outW][Cin*k*k] × [Cin*k*k][Cout] → [N][outH*outW][Cout]
-        NDArray out = col.dot(Wflat.transpose());           // differentiable!
-        out = out.transpose(0, 2, 1);                       // [N][Cout][outH*outW]
-        out = out.reshape(N, Cout, outH, outW);             // [N][Cout][outH][outW]
         return out;
     }
     
-        public static NDArray maxPool2d(NDArray x, int kernel, int stride)
-        {
-            long N = x.getShape().get(0);
-            long C = x.getShape().get(1);
-            long H = x.getShape().get(2);
-            long W = x.getShape().get(3);
+    public static NDArray maxPool2d(NDArray x, int kernel, int stride)
+    {
+        long H  = x.getShape().get(2);
+        long Wd = x.getShape().get(3);
+        long outH = (H  + stride - 1) / stride;
+        long outW = (Wd + stride - 1) / stride;
 
-            // This version assumes kernel == stride and H, W are divisible by stride
-            // (true for the 2x2 pooling on 32x32 CIFAR-10 images).
-            long outH = H / stride;
-            long outW = W / stride;
-
-            // Reshape to [N, C, outH, stride, outW, stride]
-            NDArray reshaped = x.reshape(N, C, outH, stride, outW, stride);
-            // Max over the two stride axes (axes 3 and 5)
-            return reshaped.max(new int[]{3, 5});
-        }
-
+        String hSlice = "0:" + ((outH - 1) * stride + 1) + ":" + stride;
+        String wSlice = "0:" + ((outW - 1) * stride + 1) + ":" + stride;
+        return x.get(new NDIndex(":,:," + hSlice + "," + wSlice));
+    }
+    
     /** Fully connected. x: [N][D], W: [D][Cout], b: [Cout]. */
     public static NDArray linear(NDArray x, NDArray W, NDArray b)
     {

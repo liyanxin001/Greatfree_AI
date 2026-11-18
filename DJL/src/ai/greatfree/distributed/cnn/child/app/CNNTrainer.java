@@ -108,7 +108,7 @@ public final class CNNTrainer
         this.poolFn = (x, k, stride, ignored) -> CNNTools.maxPool2d(x, k, stride);
         this.fcFn   = (x, W, b) -> CNNTools.linear(x, W, b);
 
-        this.device = this.manager.getDevice();
+      
 
         this.numEpochs = Integer.getInteger(CNNConfig.MAX_EPOCH, CNNConfig.NUM_EPOCHS);
 
@@ -126,8 +126,8 @@ public final class CNNTrainer
                 this.poolFn,
                 this.fcFn
         );
-        log.info("init() complete — " + trainIter.size() + " batches ready");
-        this.initialized = true; 
+        this.initialized = true;
+        log.info("init() complete — " + (trainIter != null ? trainIter.size() : 0) + " batches ready");
         synchronized (initLock) { initLock.notifyAll(); }
     }
 
