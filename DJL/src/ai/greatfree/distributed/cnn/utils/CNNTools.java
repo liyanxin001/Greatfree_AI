@@ -415,8 +415,8 @@ return new Pair<>(iter, loader.getClassNames());
                     NDArray l = loss.evaluate(new NDList(Y), new NDList(logits)).mean();
                     gc.backward(l);
 
-                    int[] preds = logits.argMax(1).toIntArray();
-                    int[] ys = Y.toType(DataType.INT32, false).toIntArray();
+                    int[] preds = logits.argMax(1).toType(DataType.INT32, false).toIntArray();
+                    long[] ys = Y.toType(DataType.INT64, false).toLongArray();
                     int correct = 0;
                     for (int i = 0; i < ys.length; i++) if (preds[i] == ys[i]) correct++;
                     metric.add(new float[] { l.getFloat(), correct, ys.length });
